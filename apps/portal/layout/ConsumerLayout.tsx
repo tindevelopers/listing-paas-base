@@ -2,8 +2,14 @@
 
 import React from "react";
 
+// CUSTOMIZE: Import brand config for dynamic branding
+// import { brandConfig } from '@/config/brand.config';
+
 /**
  * ConsumerLayout - Clean layout for consumer-facing pages
+ * 
+ * CUSTOMIZE: This is a simple layout wrapper. For full-featured layouts,
+ * use the Header, Footer, and Navbar components from @/components/layout
  * 
  * This layout is designed for public-facing or consumer pages.
  * It does NOT include admin sidebar or header components.
@@ -23,13 +29,12 @@ export default function ConsumerLayout({
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                {/* Consumer branding - can be customized per tenant/organization */}
-                SaaS Platform
+                {/* CUSTOMIZE: Update platform name from brandConfig */}
+                Listing Platform
               </h1>
             </div>
             <nav className="flex items-center space-x-4">
-              {/* Consumer navigation items */}
-              {/* Add consumer-specific navigation here */}
+              {/* CUSTOMIZE: Add your navigation items here */}
             </nav>
           </div>
         </div>
@@ -44,7 +49,8 @@ export default function ConsumerLayout({
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
         <div className="container mx-auto px-4 py-6">
           <div className="text-center text-gray-600 dark:text-gray-400">
-            <p>&copy; {new Date().getFullYear()} SaaS Platform. All rights reserved.</p>
+            {/* CUSTOMIZE: Update copyright with your company name */}
+            <p>&copy; {new Date().getFullYear()} Listing Platform. All rights reserved.</p>
           </div>
         </div>
       </footer>

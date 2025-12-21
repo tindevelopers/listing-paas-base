@@ -20,8 +20,53 @@ config/
 │   ├── location.config.ts    # Geography-based configuration
 │   └── hybrid.config.ts      # Combined configuration
 ├── features.config.ts        # Feature flags and SDK configs
+├── listing.config.ts         # Listing type configuration (NEW - CUSTOMIZE THIS)
+├── brand.config.ts           # Branding and company info (NEW - CUSTOMIZE THIS)
 ├── index.ts                  # Configuration loader
 └── README.md                 # This file
+```
+
+## Quick Start for Forks
+
+When you fork this platform, start by customizing these two files:
+
+### 1. `listing.config.ts` - Define Your Listing Type
+
+```typescript
+// CUSTOMIZE: Change these values for your vertical
+export const listingConfig = {
+  name: 'Property',           // or 'Service', 'Business', etc.
+  namePlural: 'Properties',
+  slug: 'properties',
+  
+  customFields: [
+    { name: 'bedrooms', type: 'number', label: 'Bedrooms', filterable: true },
+    // Add your fields...
+  ],
+  
+  features: {
+    reviews: true,
+    booking: false,
+    // Enable/disable features...
+  },
+};
+```
+
+### 2. `brand.config.ts` - Define Your Brand
+
+```typescript
+// CUSTOMIZE: Update branding
+export const brandConfig = {
+  platform: {
+    name: 'Your Platform',
+    tagline: 'Find Your Dream Property',
+    domain: 'yourplatform.com',
+  },
+  theme: {
+    primaryColor: '#3B82F6',
+    // Your brand colors...
+  },
+};
 ```
 
 ## Taxonomy Configurations
