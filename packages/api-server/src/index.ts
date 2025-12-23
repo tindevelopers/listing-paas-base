@@ -13,7 +13,10 @@ import { companiesRoutes } from './routes/companies';
 import { dealsRoutes } from './routes/deals';
 import { tasksRoutes } from './routes/tasks';
 import { listingsRoutes } from './routes/listings';
+import { publicRoutes } from './routes/public';
+import { searchRoutes } from './routes/search';
 import { stripeWebhookRoutes } from './routes/webhooks/stripe';
+import { supabaseWebhookRoutes } from './routes/webhooks/supabase';
 
 // Environment configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
@@ -60,7 +63,10 @@ app.get('/health', (c) => c.json({
 // ============================================================================
 
 app.route('/api/auth', authRoutes);
+app.route('/api/public', publicRoutes);
+app.route('/api/search', searchRoutes);
 app.route('/api/webhooks/stripe', stripeWebhookRoutes);
+app.route('/api/webhooks/supabase', supabaseWebhookRoutes);
 
 // ============================================================================
 // Protected Routes (require authentication)

@@ -17,6 +17,26 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
+    // CUSTOMIZE: Add your CDN domain for remote image optimization
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.wasabisys.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.yourplatform.com',
+      },
+      // Add more patterns as needed for your CDN
+      ...(process.env.NEXT_PUBLIC_CDN_URL
+        ? [
+            {
+              protocol: 'https' as const,
+              hostname: new URL(process.env.NEXT_PUBLIC_CDN_URL).hostname,
+            },
+          ]
+        : []),
+    ],
   },
   
   // Enable compression

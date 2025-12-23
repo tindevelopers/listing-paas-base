@@ -62,10 +62,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 /**
  * Fetch a single listing by slug
+ * Uses the public API endpoint (no auth required)
  */
 export async function getListingBySlug(slug: string): Promise<Listing | null> {
   try {
-    const response = await fetch(`${API_URL}/api/listings/slug/${slug}`, {
+    const response = await fetch(`${API_URL}/api/public/listings/slug/${slug}`, {
       next: { revalidate: 60 }, // ISR: Revalidate every 60 seconds
     });
 
@@ -74,7 +75,8 @@ export async function getListingBySlug(slug: string): Promise<Listing | null> {
       throw new Error(`Failed to fetch listing: ${response.statusText}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    return result.data || null;
   } catch (error) {
     console.error('Error fetching listing:', error);
     return null;
@@ -83,10 +85,11 @@ export async function getListingBySlug(slug: string): Promise<Listing | null> {
 
 /**
  * Fetch a single listing by ID
+ * Uses the public API endpoint (no auth required)
  */
 export async function getListingById(id: string): Promise<Listing | null> {
   try {
-    const response = await fetch(`${API_URL}/api/listings/${id}`, {
+    const response = await fetch(`${API_URL}/api/public/listings/${id}`, {
       next: { revalidate: 60 },
     });
 
@@ -95,7 +98,8 @@ export async function getListingById(id: string): Promise<Listing | null> {
       throw new Error(`Failed to fetch listing: ${response.statusText}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    return result.data || null;
   } catch (error) {
     console.error('Error fetching listing:', error);
     return null;
@@ -104,25 +108,26 @@ export async function getListingById(id: string): Promise<Listing | null> {
 
 /**
  * Search listings with filters
+ * Uses the public API endpoint (no auth required)
  */
 export async function searchListings(
   params: ListingSearchParams = {}
 ): Promise<ListingSearchResult> {
   const searchParams = new URLSearchParams();
 
-  if (params.query) searchParams.set('q', params.query);
+  if (params.query) searchParams.set('search', params.query);
   if (params.category) searchParams.set('category', params.category);
   if (params.minPrice) searchParams.set('minPrice', params.minPrice.toString());
   if (params.maxPrice) searchParams.set('maxPrice', params.maxPrice.toString());
   if (params.location) searchParams.set('location', params.location);
   if (params.page) searchParams.set('page', params.page.toString());
   if (params.limit) searchParams.set('limit', params.limit.toString());
-  if (params.sortBy) searchParams.set('sortBy', params.sortBy);
+  if (params.sortBy) searchParams.set('sortBy', params.sortBy === 'date' ? 'published_at' : params.sortBy);
   if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
 
   try {
     const response = await fetch(
-      `${API_URL}/api/listings?${searchParams.toString()}`,
+      `${API_URL}/api/public/listings?${searchParams.toString()}`,
       {
         next: { revalidate: 30 }, // Shorter cache for search results
       }
@@ -132,7 +137,14 @@ export async function searchListings(
       throw new Error(`Failed to search listings: ${response.statusText}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    return {
+      listings: result.data || [],
+      total: result.meta?.total || 0,
+      page: result.meta?.page || 1,
+      limit: result.meta?.limit || 12,
+      totalPages: result.meta?.totalPages || 0,
+    };
   } catch (error) {
     console.error('Error searching listings:', error);
     return {
@@ -158,11 +170,12 @@ export async function getListingsByCategory(
 
 /**
  * Get featured/promoted listings for homepage
+ * Uses the public API endpoint (no auth required)
  */
 export async function getFeaturedListings(limit = 6): Promise<Listing[]> {
   try {
     const response = await fetch(
-      `${API_URL}/api/listings?featured=true&limit=${limit}`,
+      `${API_URL}/api/public/featured?limit=${limit}`,
       {
         next: { revalidate: 300 }, // Cache featured for 5 minutes
       }
@@ -173,7 +186,7 @@ export async function getFeaturedListings(limit = 6): Promise<Listing[]> {
     }
 
     const result = await response.json();
-    return result.listings || [];
+    return result.data?.listings || [];
   } catch (error) {
     console.error('Error fetching featured listings:', error);
     return [];
@@ -182,13 +195,14 @@ export async function getFeaturedListings(limit = 6): Promise<Listing[]> {
 
 /**
  * Get all categories for navigation
+ * Uses the public API endpoint (no auth required)
  * CUSTOMIZE: Update to fetch from your categories endpoint
  */
 export async function getCategories(): Promise<
   Array<{ slug: string; name: string; count: number }>
 > {
   try {
-    const response = await fetch(`${API_URL}/api/categories`, {
+    const response = await fetch(`${API_URL}/api/public/categories`, {
       next: { revalidate: 600 }, // Cache categories for 10 minutes
     });
 
@@ -196,7 +210,8 @@ export async function getCategories(): Promise<
       throw new Error(`Failed to fetch categories: ${response.statusText}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    return result.data || [];
   } catch (error) {
     console.error('Error fetching categories:', error);
     // CUSTOMIZE: Return default categories for your vertical
@@ -226,11 +241,27 @@ export function formatPrice(price: number | undefined): string {
  */
 export async function getAllListingSlugs(): Promise<string[]> {
   try {
-    const response = await fetch(`${API_URL}/api/listings?limit=1000&fields=slug`);
+    const response = await fetch(`${API_URL}/api/public/sitemap?limit=10000`);
     if (!response.ok) return [];
 
     const result = await response.json();
-    return result.listings?.map((l: { slug: string }) => l.slug) || [];
+    return result.data?.listings?.map((l: { slug: string }) => l.slug) || [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get popular listing slugs for SSG pre-generation
+ * Returns the most viewed listings for static generation at build time
+ */
+export async function getPopularListingSlugs(limit = 500): Promise<string[]> {
+  try {
+    const response = await fetch(`${API_URL}/api/public/popular?limit=${limit}`);
+    if (!response.ok) return [];
+
+    const result = await response.json();
+    return result.data?.slugs || [];
   } catch {
     return [];
   }

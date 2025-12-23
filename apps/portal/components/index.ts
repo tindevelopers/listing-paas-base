@@ -13,3 +13,6 @@ export * from "./search";
 
 // Layout
 export * from "./layout";
+
+// Chat
+export * from "./chat";

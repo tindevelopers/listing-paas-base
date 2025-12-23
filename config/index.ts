@@ -13,6 +13,7 @@ import hybridConfig from './taxonomies/hybrid.config';
 import { featuresConfig } from './features.config';
 import { listingConfig } from './listing.config';
 import { brandConfig } from './brand.config';
+import { routingConfig } from './routing.config';
 
 // Determine which config to load
 const TAXONOMY_CONFIG = process.env.TAXONOMY_CONFIG || process.env.NEXT_PUBLIC_TAXONOMY_CONFIG || 'industry';
@@ -56,6 +57,14 @@ export function getBrandConfig() {
 }
 
 /**
+ * Get routing configuration
+ * CUSTOMIZE: Use this to access URL routing strategy
+ */
+export function getRoutingConfig() {
+  return routingConfig;
+}
+
+/**
  * Get the taxonomy type
  */
 export function getTaxonomyType(): 'industry' | 'location' | 'hybrid' {
@@ -66,11 +75,13 @@ export function getTaxonomyType(): 'industry' | 'location' | 'hybrid' {
 export { industryConfig, locationConfig, hybridConfig, featuresConfig };
 export { listingConfig } from './listing.config';
 export { brandConfig } from './brand.config';
+export { routingConfig } from './routing.config';
 
 // Export types
 export type { TaxonomyConfig } from '@listing-platform/config';
 export type { ListingConfig, ListingFieldConfig, CustomFieldConfig } from './listing.config';
 export type { BrandConfig } from './brand.config';
+export type { RoutingConfig, RoutingStrategy, IndustryRoutingConfig, GeographicRoutingConfig } from './routing.config';
 
 // Default export
 export default {
@@ -78,6 +89,7 @@ export default {
   features: featuresConfig,
   listing: listingConfig,
   brand: brandConfig,
+  routing: routingConfig,
   type: getTaxonomyType(),
 };
 

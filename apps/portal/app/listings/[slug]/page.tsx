@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header, Footer } from "@/components/layout";
 import { ListingDetail } from "@/components/listings";
-import { getListingBySlug, getAllListingSlugs } from "@/lib/listings";
+import { getListingBySlug, getPopularListingSlugs } from "@/lib/listings";
 
 /**
  * Listing Detail Page
@@ -48,12 +48,27 @@ export async function generateMetadata({
   };
 }
 
-// Generate static paths for SSG (optional, for better performance)
+/**
+ * ISR Configuration
+ * Revalidate pages every 60 seconds
+ */
+export const revalidate = 60;
+
+/**
+ * Generate static paths for SSG
+ * Pre-generates the top 500 most popular listings at build time
+ * Other listings are generated on-demand with ISR
+ */
 export async function generateStaticParams() {
-  // CUSTOMIZE: Enable this for SSG if you have a known set of listings
-  // const slugs = await getAllListingSlugs();
-  // return slugs.map((slug) => ({ slug }));
-  return [];
+  try {
+    // Fetch popular listings for SSG at build time
+    const slugs = await getPopularListingSlugs(500);
+    return slugs.map((slug) => ({ slug }));
+  } catch (error) {
+    console.error('Error generating static params:', error);
+    // Return empty array - pages will be generated on-demand
+    return [];
+  }
 }
 
 export default async function ListingPage({ params }: ListingPageProps) {

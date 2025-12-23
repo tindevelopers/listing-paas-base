@@ -258,6 +258,149 @@ NEXT_PUBLIC_STRIPE_KEY=pk_...
 
 ---
 
+## Vercel Deployment
+
+This platform is designed to be deployed as **3 separate Vercel projects** from a single monorepo.
+
+### Project Configuration
+
+| Project | Root Directory | Domain | Build Filter |
+|---------|---------------|--------|--------------|
+| Portal | `apps/portal` | yourplatform.com | `@tinadmin/portal` |
+| Admin | `apps/admin` | admin.yourplatform.com | `@tinadmin/admin` |
+| API | `packages/api-server` | api.yourplatform.com | `api-server` |
+
+### Step-by-Step Vercel Setup
+
+#### 1. Create Three Vercel Projects
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Link each project (run from repo root)
+cd apps/portal && vercel link
+cd apps/admin && vercel link
+cd packages/api-server && vercel link
+```
+
+#### 2. Configure Each Project
+
+**Portal Project:**
+- Root Directory: `apps/portal`
+- Framework: Next.js
+- Build Command: `cd ../.. && pnpm turbo build --filter=@tinadmin/portal`
+- Install Command: `cd ../.. && pnpm install`
+
+**Admin Project:**
+- Root Directory: `apps/admin`
+- Framework: Next.js
+- Build Command: `cd ../.. && pnpm turbo build --filter=@tinadmin/admin`
+- Install Command: `cd ../.. && pnpm install`
+
+**API Project:**
+- Root Directory: `packages/api-server`
+- Framework: Other
+- Build Command: `pnpm build`
+- Install Command: `cd ../.. && pnpm install`
+
+#### 3. Environment Variables
+
+Set these in each Vercel project dashboard:
+
+**All Projects (Shared):**
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-key
+```
+
+**Portal Specific:**
+```bash
+NEXT_PUBLIC_API_URL=https://api.yourplatform.com
+NEXT_PUBLIC_SITE_URL=https://yourplatform.com
+ROUTING_STRATEGY=industry  # or 'geographic'
+REVALIDATION_SECRET=your-secret
+# Optional: AI Chat
+OPENAI_API_KEY=sk-xxx
+# Optional: Fast Search
+TYPESENSE_API_KEY=xxx
+TYPESENSE_HOST=xxx.typesense.net
+```
+
+**Admin Specific:**
+```bash
+NEXT_PUBLIC_API_URL=https://api.yourplatform.com
+STRIPE_SECRET_KEY=sk_xxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_xxx
+```
+
+**API Specific:**
+```bash
+ALLOWED_ORIGINS=https://yourplatform.com,https://admin.yourplatform.com
+PORTAL_REVALIDATE_URL=https://yourplatform.com/api/revalidate
+REVALIDATION_SECRET=your-secret
+# Optional services
+TYPESENSE_API_KEY=xxx
+TYPESENSE_HOST=xxx.typesense.net
+WASABI_ACCESS_KEY=xxx
+WASABI_SECRET_KEY=xxx
+WASABI_BUCKET=your-bucket
+NEXT_PUBLIC_CDN_URL=https://cdn.yourplatform.com
+```
+
+#### 4. Configure Domains
+
+In each Vercel project dashboard:
+- Portal: `yourplatform.com` + `www.yourplatform.com`
+- Admin: `admin.yourplatform.com`
+- API: `api.yourplatform.com`
+
+#### 5. Enable Supabase Database Webhooks
+
+To sync listings to Typesense and trigger cache revalidation:
+
+1. Go to Supabase Dashboard → Database → Webhooks
+2. Create webhook for `listings` table:
+   - Events: INSERT, UPDATE, DELETE
+   - URL: `https://api.yourplatform.com/api/webhooks/supabase`
+   - Add header: `x-supabase-signature: your-webhook-secret`
+
+### URL Routing Strategies
+
+Configure in `config/routing.config.ts`:
+
+**Industry Template** (multi-tenant by path):
+```
+yourplatform.com/[tenant]/listings/[slug]
+```
+
+**Geographic Template** (subdomain + geo path):
+```
+us.yourplatform.com/california/san-francisco/[slug]
+```
+
+Set `ROUTING_STRATEGY=industry` or `ROUTING_STRATEGY=geographic` in Portal env vars.
+
+### Optional Services
+
+#### Typesense (Fast Search)
+1. Create account at [cloud.typesense.org](https://cloud.typesense.org)
+2. Set `TYPESENSE_API_KEY` and `TYPESENSE_HOST`
+3. Trigger initial index: `POST /api/search/reindex`
+
+#### Wasabi (Image Storage)
+1. Create bucket at [wasabi.com](https://wasabi.com)
+2. Set `WASABI_*` environment variables
+3. Configure CDN (optional) and set `NEXT_PUBLIC_CDN_URL`
+
+#### OpenAI (AI Chat)
+1. Get API key from [platform.openai.com](https://platform.openai.com)
+2. Set `OPENAI_API_KEY` in Portal and API projects
+3. Chat widget appears automatically when configured
+
+---
+
 ## Customization Patterns
 
 ### Pattern 1: Adding Custom Fields
@@ -369,7 +512,8 @@ git commit
 | `config/listing.config.ts` | Listing type, fields, features | ✅ Yes |
 | `config/brand.config.ts` | Branding, company info, theme | ✅ Yes |
 | `config/features.config.ts` | Feature flags, SDK configs | ✅ Yes |
-| `config/taxonomies/*.ts` | URL structure, categories | ⚠️ Carefully |
+| `config/routing.config.ts` | URL strategy (industry/geographic) | ✅ Yes |
+| `config/taxonomies/*.ts` | Categories, locations | ⚠️ Carefully |
 
 ### Portal App
 
@@ -392,8 +536,12 @@ git commit
 |---------|---------|-----------|
 | `@listing-platform/core` | Core types and utilities | ❌ No (extend) |
 | `@listing-platform/shared` | Shared utilities | ❌ No (extend) |
-| `@listing-platform/search` | Search components | ❌ No (extend) |
+| `@listing-platform/config` | Configuration types | ❌ No (extend) |
+| `@listing-platform/search` | Typesense search integration | ❌ No (configure) |
+| `@listing-platform/media` | Wasabi image storage | ❌ No (configure) |
+| `@listing-platform/ai` | AI chatbot with RAG | ❌ No (configure) |
 | `@tinadmin/*` | UI component library | ❌ No (use) |
+| `api-server` | Hono API server | ⚠️ Extend routes |
 
 ### Database
 

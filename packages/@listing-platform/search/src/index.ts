@@ -1,9 +1,22 @@
 /**
  * @listing-platform/search
- * Advanced Search SDK
+ *
+ * Typesense search integration for fast, typo-tolerant listing search.
+ *
+ * Features:
+ * - Full-text search with typo tolerance
+ * - Faceted filtering
+ * - Geo-search support
+ * - Field weighting for relevance
  */
 
-export * from './types';
-export * from './hooks';
-export * from './components';
-export { cn } from './utils/cn';
+export { typesenseClient, createTypesenseClient, getTypesenseConfig } from './client';
+export { searchListings, searchWithFilters, getSearchSuggestions } from './search';
+export { syncListing, syncListings, deleteListing, initializeCollection } from './sync';
+export type {
+  TypesenseConfig,
+  SearchParams,
+  SearchResult,
+  SearchHit,
+  ListingDocument,
+} from './types';
